@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+		*{
+		font-size:18px;
+		font-family:Calibri;
+		padding:0;
+		position:relative
+		}
+		main{
+			width:300px;
+			margin-left:10%;
+		}
+		.payDiv{
+			border:2px solid grey;
+			border-radius:5px;
+			margin:10px;
+			margin-left:0;
+			width:inherit;
+		}
+		.payDiv *{
+			border:0;
+			margin:5px;
+			padding:0;
+			top:-4px;
+		}
+		.payDiv img{
+			height:19px;
+			top:5px;
+			border:1px solid grey;
+			border-radius:2px;
+		}
+		.payDiv span, #transfee{
+		font-weight:bold;
+		}
+		</style>
+		<script >
+		function updateExchange(arr) {
+			Exchange = arr
+			var input = document.getElementsByClassName('payDiv')[0];
+			var code = Exchange.code;
+			var rate = (Math.round(Exchange.rates[0]['mid']*100)/100).toString();
+			var ratediv = (Math.round(1/Exchange.rates[0]['mid']*100)/100).toString();
+			input.children[0].src = code + 'flag.png'; //img
+			input.children[1].value = ratediv; //input
+			input.children[2].innerHTML = code; //span
+			document.getElementById('pExchRate').innerHTML = `1 ${code} = <b>${rate} PLN</b>`;
+		}
+		
+		function updateExchangeInputs(){
+			event.target.value=event.target.value.replace(',', '.').replace(/[^0-9\.]+/g, "");
+			var input = event.target.value //inputed currency after stripping illegal signs
+			
+			//section for deleting more than one dot
+			const re = /\..*?(\.)/;//if theres more than one dot returns match thats everything betwen first and second dor
+			if(input.match(re)){
+				event.target.value=input.slice(0, input.match(re).index + input.match(re)[0].length-1); //slice second dot and everything after it
+			}
+			
+			//section for calculating exchange and filling other input
+			if(event.target==document.getElementById('inputPL'))//conditional assignment, if modified input is empty or '.' make other input empty(prevents NaN) in other cases calculate exchange.
+				document.getElementById('inputGBP').value = input && input!="." ? (Math.round(parseFloat(input)/Exchange.rates[0]['mid']*100)/100).toString() : '';
+			else
+				document.getElementById('inputPL').value = input && input!="." ? (Math.round(parseFloat(input)*Exchange.rates[0]['mid']*100)/100).toString() : '';
+		}
+		
+		var xmlhttp = new XMLHttpRequest();
+		var url = "http://api.nbp.pl/api/exchangerates/rates/a/gbp/?format=json";
+		let Exchange; //object that holds JSON with exchange rates from goverment site
+
+		xmlhttp.onreadystatechange = function() {
+		  if (this.readyState == 4 && this.status == 200) {
+			var myArr = JSON.parse(this.responseText);
+			updateExchange(myArr);
+		  }
+		};
+		
+		xmlhttp.open("GET", url, true);
+		xmlhttp.send();
+		
+		window.onload = function(){
+			document.getElementById('inputPL').addEventListener("keyup", updateExchangeInputs);
+			document.getElementById('inputGBP').addEventListener("keyup", updateExchangeInputs);
+			};
+		</script>
+	</head>
+	<body>
+	<main>
+		<label>You send</label>
+		<div class='payDiv'>
+			<img >
+			<input id='inputGBP'  >
+			<span>loading</span>
+		</div>
+		<label>They receive</label>
+		<div class='payDiv'>
+			<img src="PLflag.png">
+			<input id="inputPL"  value='1'>
+			<span>PLN</span>
+		</div>
+		<p id='pExchRate'>1 PLN = Coraz mniej, inwestuj w kolumbijskie pesos</p>
+		<p id='transfee'>No transfer fee</p>
+	</main>
+	</body>
+</html>
